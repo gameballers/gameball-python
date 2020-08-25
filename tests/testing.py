@@ -1,8 +1,7 @@
 # Gameball main object instantiation
 import gameball
-gameball.api_key = '7c7636658209418c9a82306a421f76a5'
-gameball.transaction_key = '26e1967d89114388bdd1772587c336c8'
-
+gameball.api_key = "gb_test_..."
+gameball.transaction_key = "gb_test_..."
 
 # generates random player_unique_id
 import uuid
