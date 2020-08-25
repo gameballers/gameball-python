@@ -6,7 +6,7 @@ import enum
 api_key = None
 transaction_key = None
 default_http_client = None
-api_base = "https://gb-api.azurewebsites.net/api/v2.0/integrations/"
+api_base = "https://api.gameball.co/api/v2.0"
 
 events = 'event'
 referral = 'referral'
