@@ -1,5 +1,6 @@
 from gameball.api_requestor import APIRequestor
 import gameball.constants
+import gameball.utils
 from gameball.models.event_object import eventObject
 
 def send_event(event):
@@ -10,8 +11,7 @@ def send_event(event):
     "events": event.events
     }
 
-    if event.player_attributes is not {}:
-        body["playerAttributes"] = event.player_attributes
+    body = gameball.utils.handle_channel_merging(body, event.email, event.mobile)
 
     response = api_requestor_instance.request(method='POST',url=gameball.constants.events, params = body)
     return response

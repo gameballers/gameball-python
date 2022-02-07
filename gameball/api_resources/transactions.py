@@ -3,100 +3,137 @@ import gameball.utils, gameball.constants
 from datetime import datetime
 from gameball.models.reward_object import rewardObject
 
-def get_player_balance(player_unique_id):
+
+def hold_points(player_unique_id, amount, email = None, mobile = None):
 
     api_requestor_instance = APIRequestor()
-    
-    body_hashed = gameball.utils.hash_body(player_unique_id)
 
     body={
-    "playerUniqueId": player_unique_id,
-    "hash": body_hashed
+        "playerUniqueId": player_unique_id,
+        "amount":amount,
+        "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
     }
-    response = api_requestor_instance.request(method='POST',url=gameball.constants.player_points_balance, params = body)
-    return response
 
+    body = gameball.utils.handle_channel_merging(body, email, mobile)
 
-def hold_points(player_unique_id, amount):
-
-    api_requestor_instance = APIRequestor()
-    body_hashed = gameball.utils.hash_body(player_unique_id, datetime.utcnow().strftime("%y%m%d%H%M%S"), amount)
-
-    body={
-    "playerUniqueId": player_unique_id,
-    "amount":amount,
-    "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
-    "hash": body_hashed
-    }
     response = api_requestor_instance.request(method='POST',url=gameball.constants.hold_Points, params = body)
     return response
 
 
-def redeem_points(player_unique_id, hold_reference, transaction_id):
+def redeem_points(player_unique_id, transaction_id, redeemed_amount= None, hold_reference= None, email = None, mobile = None):
 
     api_requestor_instance = APIRequestor()
-    body_hashed = gameball.utils.hash_body(player_unique_id, datetime.utcnow().strftime("%y%m%d%H%M%S"))
 
     body={
-    "playerUniqueId": player_unique_id,
-    "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
-    "hash": body_hashed,
-    "holdReference":hold_reference,
-    "transactionId":transaction_id
+        "playerUniqueId": player_unique_id,
+        "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
+        "holdReference":hold_reference,
+        "redeemedAmount":redeemed_amount,
+        "transactionId":transaction_id
     }
+
+    body = gameball.utils.handle_channel_merging(body, email, mobile)
 
     response = api_requestor_instance.request(method='POST',url=gameball.constants.redeem_points, params = body)
     return response
 
 
-def reverse_transaction(player_unique_id, transaction_id, reversed_transaction_id):
+def refund(player_unique_id, transaction_id, reversed_transaction_id, amount=None, email = None, mobile = None):
 
     api_requestor_instance = APIRequestor()
-    body_hashed = gameball.utils.hash_body(player_unique_id, datetime.utcnow().strftime("%y%m%d%H%M%S"))
 
     body={
-    "playerUniqueId": player_unique_id,
-    "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
-    "hash": body_hashed,
-    "transactionId":transaction_id,
-    "reversedTransactionId":reversed_transaction_id 
+        "playerUniqueId":player_unique_id,
+        "transactionId":transaction_id,
+        "reverseTransactionId":reversed_transaction_id,
+        "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
+        "amount": amount
     }
 
-    response = api_requestor_instance.request(method='POST',url=gameball.constants.reverse_transaction, params = body)
+    body = gameball.utils.handle_channel_merging(body, email, mobile)
+
+    response = api_requestor_instance.request(method='POST',url=gameball.constants.refund_transaction, params = body)
     return response
 
 
-def reverse_hold(player_unique_id, hold_reference):
+def reverse_hold(hold_reference):
 
     api_requestor_instance = APIRequestor()
-    body_hashed = gameball.utils.hash_body(player_unique_id, datetime.utcnow().strftime("%y%m%d%H%M%S"))
 
-    body={
-    "playerUniqueId": player_unique_id,
-    "holdReference":hold_reference,
-    "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
-    "hash": body_hashed
-    }
-    response = api_requestor_instance.request(method='POST',url=gameball.constants.hold_Points, params = body)
+    response = api_requestor_instance.request(method='DELETE',url=gameball.constants.reverse_hold.format(hold_reference= hold_reference), params = None)
     return response
 
 
 def reward_points(reward):
 
     api_requestor_instance = APIRequestor()
-    body_hashed = gameball.utils.hash_body(reward.player_unique_id, datetime.utcnow().strftime("%y%m%d%H%M%S"), reward.amount)
 
     body={
-    "playerUniqueId": reward.player_unique_id,
-    "amount":reward.amount,
-    "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
-    "hash": body_hashed,
-    "transactionId":reward.transaction_id
+        "playerUniqueId": reward.player_unique_id,
+        "amount":reward.amount,
+        "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
+        "transactionId":reward.transaction_id,
+        "merchant": reward.merchant
     }
 
-    if reward.player_attributes != {}:
-        body["playerAttributes"] = reward.player_attributes
+    body = gameball.utils.handle_channel_merging(body, reward.email, reward.mobile)
 
     response = api_requestor_instance.request(method='POST',url=gameball.constants.reward_points, params = body)
+    return response
+
+def manual_transaction(player_unique_id, transaction_id, username, reason, amount=None, points=None, email = None, mobile = None):
+
+    api_requestor_instance = APIRequestor()
+
+    body={
+        "playerUniqueId":player_unique_id,
+        "amount": amount,
+        "points": points,
+        "transactionId":transaction_id,
+        "transactionTime":gameball.utils.encode_date(datetime.utcnow()),
+        "username": username,
+        "reason": reason
+    }
+
+    body = gameball.utils.handle_channel_merging(body, email, mobile)
+
+    response = api_requestor_instance.request(method='POST',url=gameball.constants.manual_transaction, params = body)
+    return response
+
+def list_transactions(page= 1, limit= 50, direction= None, from_date=None, to_date=None, transaction_id=None, status=None):
+
+    api_requestor_instance = APIRequestor()
+
+    parameters={}
+
+    if page is not None:
+        parameters['page'] = page
+    
+    if limit is not None:
+        parameters['limit'] = limit
+
+    if direction is not None:
+        parameters['direction'] = direction
+
+    if from_date is not None:
+        parameters['from'] = from_date
+
+    if to_date is not None:
+        parameters['to'] = to_date
+
+    if transaction_id is not None:
+        parameters['transactionId'] = transaction_id
+    
+    if status is not None:
+        parameters['status'] = status
+
+    # urlencode
+    query= "?"
+    for key in parameters:
+        query+=key + "=" + str(parameters[key]) + "&"
+
+    # query= "?" + parse.urlparse(parameters)
+
+    response = api_requestor_instance.request(method='GET',url=gameball.constants.list_transactions + query, params = None)
     return response
     
